@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="مَصرفي" />
+  <title>مَصرفي | Masrofy - تتبع مصاريفك بذكاء</title>
+  <meta name="description" content="تطبيق جوال عربي لتتبع المصاريف والدخل مع لوحة تحكم وتحليلات ذكية. يتثبت على الجوال ويعمل بدون نت." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <script src="./chart.min.js"></script>
+</head>
+<body>
+  <!-- splash -->
+  <div id="splash" class="splash">
+    <div class="splash-in">
+      <img src="icon.svg" alt="مَصرفي" />
+      <h1>مَصرفي</h1>
+      <p>فلوسك تحت السيطرة 💰</p>
+      <div class="splash-bar"><div></div></div>
+    </div>
+  </div>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="logo">💰 <span class="logo-t">مَصرفي</span> <span>Masrofy</span></div>
+      <div class="header-actions">
+        <button id="installBtn" class="btn btn-primary btn-sm hidden">📲 ثبّت التطبيق</button>
+        <button id="accentBtn" class="btn-icon" title="لون التطبيق">🎨</button>
+        <button id="lockBtn" class="btn-icon" title="قفل التطبيق">🔓</button>
+        <button id="themeBtn" class="btn-icon" title="الوضع الليلي">🌙</button>
+        <button id="exportBtn" class="btn btn-outline btn-hide-mobile">📥 تصدير</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" id="tab-home">
+    <!-- Budget banner -->
+    <section id="budgetBanner" class="banner hidden" data-page="home"></section>
+    <section id="updateBanner" class="banner update hidden" data-page="home">
+      <span>✨ يتوفر تحديث جديد للتطبيق.</span>
+      <button id="reloadUpdateBtn" type="button" class="btn btn-primary btn-sm">تحديث الآن</button>
+    </section>
+
+    <!-- Hero greeting -->
+    <section class="hero" id="heroCard" data-page="home">
+      <div class="hero-emoji" id="heroEmoji">👋</div>
+      <div><b id="heroTxt"></b><small id="heroSub" class="muted"></small></div>
+    </section>
+
+    <!-- Daily digest -->
+    <section class="card digest" id="digestCard" data-page="home">
+      <div class="digest-top"><b>📌 ملخص اليوم</b><span id="digestDate"></span></div>
+      <div class="digest-grid">
+        <div><small>مصروف اليوم</small><b id="digestExp">-</b></div>
+        <div><small>دخل اليوم</small><b id="digestInc">-</b></div>
+        <div><small>المتاح يومياً</small><b id="digestSafe">-</b></div>
+      </div>
+      <p id="digestTip" class="muted digest-tip"></p>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats" data-page="home">
+      <div class="card stat income">
+        <p>دخل هذا الشهر</p>
+        <h2 id="totalIncome">0 ر.س</h2>
+        <small id="incomeCount">0 عملية</small>
+      </div>
+      <div class="card stat expense">
+        <p>مصروف هذا الشهر</p>
+        <h2 id="totalExpense">0 ر.س</h2>
+        <small id="expenseCount">0 عملية</small>
+      </div>
+      <div class="card stat balance">
+        <p>صافي هذا الشهر</p>
+        <h2 id="balance">0 ر.س</h2>
+        <small id="savingRate">معدل الادخار: 0%</small>
+      </div>
+      <div class="card stat budget-card">
+        <p>ميزانية الشهر (<span id="curBudget">ر.س</span>)</p>
+        <div class="budget-row">
+          <input id="budgetInput" type="number" min="0" placeholder="مثال: 3000" />
+          <button id="saveBudgetBtn" class="btn btn-primary btn-sm">حفظ</button>
+        </div>
+        <div class="budget-row">
+          <select id="currency" title="العملة"></select>
+        </div>
+        <div class="progress"><div id="budgetBar"></div></div>
+        <small id="budgetText">حدد ميزانيتك لتفعيل التنبيهات</small>
+      </div>
+    </section>
+
+    <!-- Monthly plan -->
+    <section class="card hidden" id="planCard" data-page="home">
+      <div class="list-head">
+        <h3>🗂️ خطتي الشهرية <span id="planMode" class="recur-badge"></span></h3>
+        <div class="plan-actions">
+          <button id="editPlanBtn" class="btn btn-outline btn-sm">⚙️ تعديل</button>
+          <button id="delPlanBtn" class="btn btn-danger btn-sm">🗑️</button>
+        </div>
+      </div>
+      <div id="planSummary" class="plan-summary"></div>
+      <div id="planRows"></div>
+      <p id="planFun" class="muted plan-fun"></p>
+    </section>
+
+    <!-- Accounts -->
+    <section class="card" id="accCard" data-page="home">
+      <div class="list-head">
+        <h3>💳 حساباتي</h3>
+        <b id="accTotal" class="acc-total"></b>
+      </div>
+      <div id="accList" class="acc-list"></div>
+      <div class="budget-row">
+        <input id="accName" type="text" maxlength="20" placeholder="حساب جديد (مثال: بنك)" />
+        <select id="accIcon">
+          <option value="💵">💵 كاش</option>
+          <option value="🏦">🏦 بنك</option>
+          <option value="👛">👛 محفظة</option>
+          <option value="💳">💳 بطاقة</option>
+        </select>
+        <button id="addAccBtn" class="btn btn-primary btn-sm">➕</button>
+      </div>
+      <div class="transfer-box">
+        <b>🔄 تحويل بين الحسابات</b>
+        <div class="tr-row">
+          <select id="trFrom" title="من"></select>
+          <button id="trSwap" class="btn btn-outline btn-sm" title="تبديل الحسابين">⇄</button>
+          <select id="trTo" title="إلى"></select>
+        </div>
+        <div class="budget-row">
+          <input id="trAmount" type="number" min="1" step="any" placeholder="المبلغ" />
+          <button id="trBtn" class="btn btn-outline btn-sm">تحويل</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Form -->
+      <section class="card form-narrow" id="formCard" data-page="add">
+        <h3 id="formTitle">➕ إضافة عملية جديدة</h3>
+        <form id="txForm">
+          <div class="tabs">
+            <button type="button" data-type="expense" class="tab active">مصروف</button>
+            <button type="button" data-type="income" class="tab">دخل</button>
+          </div>
+          <label>المبلغ (<span id="curAmount">ر.س</span>)
+            <input id="amount" type="number" min="0.01" step="any" inputmode="decimal" required placeholder="مثال: 150" />
+          </label>
+          <div class="quick-amounts" aria-label="مبالغ سريعة">
+            <button type="button" data-amount="10">10</button>
+            <button type="button" data-amount="50">50</button>
+            <button type="button" data-amount="100">100</button>
+            <button type="button" data-amount="500">500</button>
+          </div>
+          <div class="row">
+            <label>الفئة
+              <select id="category"></select>
+            </label>
+            <label>التاريخ
+              <input id="date" type="date" required />
+            </label>
+          </div>
+          <label>ملاحظة
+            <input id="note" type="text" maxlength="80" placeholder="مثال: غداء، راتب، بنزين..." />
+          </label>
+          <label>التكرار
+            <select id="recur">
+              <option value="none">مرة واحدة</option>
+              <option value="daily">🔁 يومي</option>
+              <option value="weekly">🔁 أسبوعي</option>
+              <option value="monthly">🔁 شهري</option>
+            </select>
+          </label>
+          <label>الحساب
+            <select id="txAccount"></select>
+          </label>
+          <button id="submitBtn" class="btn btn-primary btn-block" type="submit">إضافة ✅</button>
+          <button id="cancelEditBtn" class="btn btn-outline btn-block hidden" type="button">إلغاء التعديل</button>
+        </form>
+        <div class="backup-zone">
+          <button id="exportCsvBtn" class="btn btn-outline btn-sm">📥 CSV</button>
+          <button id="exportJsonBtn" class="btn btn-outline btn-sm">💾 نسخة احتياطية</button>
+          <label for="importFile" class="btn btn-outline btn-sm file-label">📤 استيراد</label>
+          <input id="importFile" type="file" accept="application/json,.json" class="hidden" />
+        </div>
+        <div class="danger-zone">
+          <button id="sampleBtn" class="btn btn-outline btn-sm">تجربة ببيانات جاهزة</button>
+          <button id="clearBtn" class="btn btn-danger btn-sm">مسح العمليات</button>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section class="card" id="chartsCard" data-page="reports">
+        <div class="list-head">
+          <h3>📊 تحليل المصاريف حسب الفئة</h3>
+          <div class="report-tools">
+            <select id="reportMonth" aria-label="شهر التقرير"></select>
+            <button id="repBtn" class="btn btn-outline btn-sm">📤 التقرير</button>
+          </div>
+        </div>
+        <div id="catEmpty" class="empty hidden">لا توجد مصاريف بعد — أضف مصروفاً لتظهر الرسوم 📊</div>
+        <canvas id="catChart" height="220"></canvas>
+        <h3 class="mt">📈 الدخل vs المصروف (آخر 6 أشهر)</h3>
+        <div id="monthEmpty" class="empty hidden">لا توجد بيانات بعد — أضف عملياتك وستظهر المقارنة هنا 📈</div>
+        <canvas id="monthChart" height="220"></canvas>
+        <h3 class="mt">📉 تطور الرصيد (آخر 30 يوم)</h3>
+        <div id="balEmpty" class="empty hidden">لا توجد حركة بعد — سجل عملياتك لترى تطور رصيدك 📉</div>
+        <canvas id="balChart" height="200"></canvas>
+        <h3 class="mt">🗓️ مصروف الأسابيع الأخيرة</h3>
+        <div id="weekEmpty" class="empty hidden">لا توجد مصاريف بعد 📭</div>
+        <canvas id="weekChart" height="200"></canvas>
+      </section>
+
+    <!-- Insights -->
+    <section class="card" data-page="reports">
+      <h3>🤖 تحليلات ذكية</h3>
+      <p class="muted">محرك تحليل محلي 100% — بدون إرسال بياناتك لأي سيرفر.</p>
+      <div id="insights" class="insights"></div>
+    </section>
+
+    <!-- Calendar -->
+    <section class="card" id="calCard" data-page="cal">
+      <div class="list-head">
+        <h3>🗓️ تقويم المصاريف</h3>
+        <div class="cal-nav">
+          <button id="calPrev" class="btn btn-outline btn-sm" title="الشهر السابق">›</button>
+          <b id="calLabel"></b>
+          <button id="calNext" class="btn btn-outline btn-sm" title="الشهر التالي">‹</button>
+          <button id="calToday" class="btn btn-outline btn-sm">اليوم</button>
+        </div>
+      </div>
+      <div class="cal-week">
+        <span>أحد</span><span>إثنين</span><span>ثلا</span><span>أرب</span><span>خمي</span><span>جمع</span><span>سبت</span>
+      </div>
+      <div id="calGrid" class="cal-grid"></div>
+      <div id="calDetail" class="cal-detail"></div>
+    </section>
+
+    <!-- Challenges -->
+    <section class="card" id="chalCard" data-page="reports">
+      <h3>🎯 تحديات الادخار</h3>
+      <p class="muted">حوّش لهدفك بمتعة — المساهمات تتبعية ولا تخصم من رصيدك.</p>
+      <div id="chalList"></div>
+      <div class="preset-row">
+        <button class="btn btn-outline btn-sm" onclick="chalPreset('تحدي 52 أسبوع 🏃', 5200, 52)">🏃 52 أسبوع</button>
+        <button class="btn btn-outline btn-sm" onclick="chalPreset('تحويشة 5000 💰', 5000, 10)">💰 تحويشة 5000</button>
+        <button class="btn btn-outline btn-sm" onclick="chalPreset('سفر ✈️', 10000, 20)">✈️ سفر</button>
+      </div>
+      <div class="row">
+        <label>اسم التحدي
+          <input id="chalName" type="text" maxlength="30" placeholder="مثال: لابتوب جديد" />
+        </label>
+        <label>المبلغ المستهدف
+          <input id="chalTarget" type="number" min="1" step="any" placeholder="مثال: 3000" />
+        </label>
+      </div>
+      <div class="budget-row">
+        <input id="chalWeeks" type="number" min="1" step="1" placeholder="عدد الأسابيع (مثال: 8)" />
+        <button id="addChalBtn" class="btn btn-primary btn-sm">➕ ابدأ التحدي</button>
+      </div>
+    </section>
+
+    <!-- List -->
+    <section class="card" id="listCard" data-page="list">
+      <div class="list-head">
+        <h3>🧾 سجل العمليات</h3>
+        <div class="filters">
+          <input id="search" type="search" placeholder="🔍 بحث..." />
+          <select id="filterCat"><option value="">كل الفئات</option></select>
+          <select id="filterType">
+            <option value="">الكل</option>
+            <option value="expense">مصاريف</option>
+            <option value="income">دخل</option>
+          </select>
+          <select id="filterMonth"><option value="">كل الشهور</option></select>
+          <select id="filterAcc"><option value="">كل الحسابات</option></select>
+          <select id="filterSort">
+            <option value="new">الأحدث أولاً</option>
+            <option value="old">الأقدم أولاً</option>
+            <option value="high">الأعلى مبلغاً</option>
+            <option value="low">الأقل مبلغاً</option>
+          </select>
+        </div>
+      </div>
+      <div id="txList" class="tx-list"></div>
+      <div id="listSummary" class="list-summary"></div>
+    </section>
+
+    <footer class="footer">
+      <p>صُنع بـ ❤️ كمشروع مفتوح المصدر — ارفعه على GitHub واعرضه في معرض أعمالك.</p>
+      <p><button id="replayBtn" class="btn btn-outline btn-sm">❓ إعادة الجولة التعريفية</button></p>
+      <p class="muted">💡 على الجوال: من متصفح كروم اضغط ⋮ ثم "تثبيت التطبيق" — وعلى الآيفون: مشاركة ← إضافة للشاشة الرئيسية</p>
+    </footer>
+  </main>
+
+  <!-- زر إضافة عائم للجوال -->
+  <button id="fab" class="fab" title="إضافة سريعة">＋</button>
+
+  <!-- شريط تنقل سفلي للجوال -->
+  <nav class="bottom-nav" aria-label="التنقل الرئيسي">
+    <button type="button" data-page="home" class="bnav active" aria-label="الرئيسية">🏠<small>الرئيسية</small></button>
+    <button type="button" data-page="reports" class="bnav" aria-label="التقارير">📊<small>تقارير</small></button>
+    <button type="button" data-page="add" class="bnav" aria-label="إضافة عملية">➕<small>إضافة</small></button>
+    <button type="button" data-page="cal" class="bnav" aria-label="التقويم">🗓️<small>التقويم</small></button>
+    <button type="button" data-page="list" class="bnav" aria-label="سجل العمليات">🧾<small>السجل</small></button>
+  </nav>
+
+  <!-- toast -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <!-- الجولة التعريفية -->
+  <div id="onboarding" class="overlay hidden" role="dialog" aria-modal="true" aria-label="الجولة التعريفية">
+    <div class="sheet">
+      <div id="obSlides"></div>
+      <div class="ob-count" id="obDots"></div>
+      <div class="sheet-nav">
+        <button id="obSkip" class="btn btn-outline">تخطي</button>
+        <button id="obNext" class="btn btn-primary" style="flex:1">التالي</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- معالج الإعداد -->
+  <div id="wizard" class="overlay hidden" role="dialog" aria-modal="true" aria-label="إعداد الخطة">
+    <div class="sheet">
+      <h3 id="wzTitle"></h3>
+      <div id="wzBody"></div>
+      <div class="sheet-nav" id="wzNav"></div>
+    </div>
+  </div>
+
+  <!-- نافذة المظهر -->
+  <div id="themeSheet" class="overlay hidden" role="dialog" aria-modal="true" aria-label="إعدادات المظهر">
+    <div class="sheet">
+      <h3>🎨 المظهر</h3>
+      <p class="muted line">اختر لون التطبيق المفضل:</p>
+      <div class="swatches" id="swatches"></div>
+      <label class="set-label">الاسم (يظهر في التحية)
+        <input id="userName" type="text" maxlength="20" placeholder="مثال: بسام" />
+      </label>
+      <label class="check-row"><input id="glassToggle" type="checkbox" /><span>🪟 الطابع الزجاجي للبطاقات</span></label>
+      <div class="sheet-nav">
+        <button class="btn btn-outline" style="flex:1" onclick="$('themeSheet').classList.add('hidden')">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- تقرير الشهر -->
+  <div id="reportModal" class="overlay hidden" role="dialog" aria-modal="true" aria-label="تقرير الشهر">
+    <div class="sheet">
+      <h3>📊 تقرير <span id="repMonth"></span></h3>
+      <div id="repBody"></div>
+      <div class="sheet-nav wrap">
+        <button id="repCopy" class="btn btn-outline">📋 نسخ</button>
+        <button id="repShare" class="btn btn-primary" style="flex:1">📤 مشاركة</button>
+        <button id="repClose" class="btn btn-outline">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- إعداد القفل -->
+  <div id="lockSheet" class="overlay hidden" role="dialog" aria-modal="true" aria-label="إعداد قفل التطبيق">
+    <div class="sheet">
+      <h3>🔐 قفل التطبيق</h3>
+      <p class="muted line">قفل واجهة بسيط يمنع الاطلاع العابر. لا يشفّر بياناتك، ويُحفظ الرقم على جهازك فقط.</p>
+      <div id="lockSetupBody"></div>
+      <div class="sheet-nav">
+        <button class="btn btn-outline" onclick="closeLockSheet()">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- شاشة القفل -->
+  <div id="lockScreen" class="overlay hidden lock-screen" role="dialog" aria-modal="true" aria-label="التطبيق مقفل">
+    <div class="lock-box">
+      <div class="slide-emoji">🔒</div>
+      <h2 class="center">مَصرفي مقفل</h2>
+      <p class="muted center">ادخل الرقم السري</p>
+      <div id="lockDots" class="pin-dots"><span></span><span></span><span></span><span></span></div>
+      <div id="lockPad" class="pin-pad"></div>
+      <button id="forgotPin" class="btn btn-outline btn-sm">نسيت الرقم؟</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
