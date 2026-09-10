@@ -153,7 +153,7 @@ form input, form select, .filters input, .filters select, .budget-row input, .bu
 .banner.warn { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
 .banner.danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 .banner.ok { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-.hidden { display: none !important; }
+.hidden, .page-hidden { display: none !important; }
 
 .insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 12px; }
 .insight { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-size: .92rem; }

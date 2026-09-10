@@ -810,14 +810,19 @@ window.delTx = (id) => {
 // ---------- charts ----------
 function renderCharts() {
   const reportYm = selectedReportMonth();
+  const allReal = state.txs.filter(REAL);
   const expenses = state.txs.filter(t => REAL(t) && t.type === 'expense' && (t.date || '').slice(0, 7) === reportYm);
   const catEmpty = !expenses.length;
-  const monthEmpty = !state.txs.filter(REAL).length;
+  const monthEmpty = !allReal.length;
   $('catEmpty').classList.toggle('hidden', !catEmpty);
   $('catChart').style.display = catEmpty ? 'none' : '';
   $('monthEmpty').classList.toggle('hidden', !monthEmpty);
   $('monthChart').style.display = monthEmpty ? 'none' : '';
-  if (!window.Chart || (catEmpty && monthEmpty)) {
+  if (monthEmpty) {
+    ['balEmpty', 'weekEmpty'].forEach(id => $(id).classList.remove('hidden'));
+    ['balChart', 'weekChart'].forEach(id => $(id).style.display = 'none');
+  }
+  if (!window.Chart || monthEmpty) {
     if (catChart) { catChart.destroy(); catChart = null; }
     if (monthChart) { monthChart.destroy(); monthChart = null; }
     if (balChart) { balChart.destroy(); balChart = null; }
@@ -1596,7 +1601,7 @@ try {
 function showPage(name) {
   if (!['home', 'reports', 'add', 'cal', 'list'].includes(name)) name = 'home';
   curTab = name;
-  document.querySelectorAll('main [data-page]').forEach(s => s.classList.toggle('hidden', s.dataset.page !== name));
+  document.querySelectorAll('main [data-page]').forEach(s => s.classList.toggle('page-hidden', s.dataset.page !== name));
   document.querySelectorAll('.bnav').forEach(b => b.classList.toggle('active', b.dataset.page === name));
   if (name === 'home') renderPlan();
   try { localStorage.setItem('masrofy-tab', name); } catch {}

@@ -2,6 +2,8 @@
 
 > تطبيق جوال (PWA) عربي لتتبع المصاريف والدخل مع تحليلات ذكية — يتثبت على الجوال ويعمل بدون نت.
 
+للمطورين وأدوات البرمجة: اقرأ [AGENTS.md](AGENTS.md) قبل تعديل المشروع؛ يحتوي بنية التطبيق وقواعد سلامة البيانات والاختبار والإصدار.
+
 ![PWA](https://img.shields.io/badge/PWA-ready-purple) ![Mobile](https://img.shields.io/badge/Mobile--first-green) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## 📱 التثبيت على الجوال
@@ -19,7 +21,7 @@
 
 ## 📦 نسخة APK (أندرويد)
 
-ملف جاهز للتثبيت المباشر: **`Masrofy-v1.9-debug.apk`** (موقّع بمفتاح debug — للاختبار، وليس للنشر في متجر Play).
+ملف التثبيت المحلي هو **`Masrofy-v1.9-debug.apk`**، ويُرفع إلى صفحة **Releases** في GitHub (موقّع بمفتاح debug — للاختبار، وليس للنشر في متجر Play).
 
 التثبيت على جوالك:
 1. انسخ الملف لجوالك (واتساب / تيليجرام / درايف / USB)
@@ -157,7 +159,6 @@ python -m http.server 8000
 ├── app.js          # المنطق + التحليلات الذكية + الرسوم
 ├── chart.min.js    # Chart.js محلي (أوفلاين)
 ├── manifest.json   # إعدادات PWA
-├── Masrofy-v1.9-debug.apk # نسخة أندرويد للاختبار
 ├── android-src/    # مصدر غلاف WebView وسكربت البناء
 ├── README.md
 └── LICENSE
