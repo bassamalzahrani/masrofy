@@ -315,7 +315,7 @@
         <button class="btn btn-outline btn-sm" onclick="chalPreset('تحويشة 5000 💰', 5000, 10)">💰 تحويشة 5000</button>
         <button class="btn btn-outline btn-sm" onclick="chalPreset('سفر ✈️', 10000, 20)">✈️ سفر</button>
       </div>
-      <div class="row">
+      <div class="row challenge-fields">
         <label>اسم التحدي
           <input id="chalName" type="text" maxlength="30" placeholder="مثال: لابتوب جديد" />
         </label>
@@ -323,7 +323,7 @@
           <input id="chalTarget" type="number" min="1" step="any" placeholder="مثال: 3000" />
         </label>
       </div>
-      <div class="budget-row">
+      <div class="budget-row challenge-actions">
         <input id="chalWeeks" type="number" min="1" step="1" placeholder="عدد الأسابيع (مثال: 8)" />
         <button id="addChalBtn" class="btn btn-primary btn-sm">➕ ابدأ التحدي</button>
       </div>
@@ -362,7 +362,7 @@
           </div>
         </section>
         <section class="card settings-card settings-wide">
-          <div class="settings-card-title"><svg class="ui-icon"><use href="#i-settings"></use></svg><div><h3>عن التطبيق</h3><p>مَصرفي 2.1 · يعمل محليًا وبدون حساب</p></div></div>
+          <div class="settings-card-title"><svg class="ui-icon"><use href="#i-settings"></use></svg><div><h3>عن التطبيق</h3><p>مَصرفي 2.1.1 · يعمل محليًا وبدون حساب</p></div></div>
           <button id="replayBtn" class="setting-row"><span>إعادة الجولة التعريفية</span><span class="setting-value">بدء</span></button>
         </section>
       </div>
@@ -394,10 +394,6 @@
       <div id="listSummary" class="list-summary"></div>
     </section>
 
-    <footer class="footer">
-      <p>صُنع بـ ❤️ كمشروع مفتوح المصدر — ارفعه على GitHub واعرضه في معرض أعمالك.</p>
-      <p class="muted">💡 على الجوال: من متصفح كروم اضغط ⋮ ثم "تثبيت التطبيق" — وعلى الآيفون: مشاركة ← إضافة للشاشة الرئيسية</p>
-    </footer>
   </main>
 
   <!-- زر إضافة عائم للجوال -->

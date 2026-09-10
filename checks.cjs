@@ -1,5 +1,7 @@
 const assert=require('assert'),fs=require('fs'),vm=require('vm');
 const src=fs.readFileSync(__dirname+'/app.js','utf8');
+const html=fs.readFileSync(__dirname+'/index.html','utf8');
+const css=fs.readFileSync(__dirname+'/style.css','utf8');
 const nodes=new Map(), alerts=[];
 function node(id){if(!nodes.has(id))nodes.set(id,{value:'',dataset:{},style:{},children:[],classList:{add(){},remove(){},toggle(){}},addEventListener(){},querySelectorAll(){return []},appendChild(c){this.children=[c]},innerHTML:'',textContent:''});return nodes.get(id);}
 const storage=new Map();
@@ -74,5 +76,9 @@ assert(!run(`$('insights').innerHTML`).includes('<img'));
 run(`setReportChart('months')`);
 assert.equal(run(`$('activeChartTitle').textContent`),'الدخل مقابل المصروف');
 assert(src.includes("$('settingsBtn').onclick = () => showPage('settings')"));
+assert(!html.includes('صُنع بـ ❤️ كمشروع مفتوح المصدر'));
+assert(html.includes('class="row challenge-fields"'));
+assert(css.includes('.stats > .stat.balance'));
+assert(css.includes('#chalCard .challenge-actions'));
 
-console.log('34 checks passed: data safety, undo, custom-category import, recurring schedules, signed opening balances, account archiving, monthly dashboard, report KPIs, category drill-down, upcoming commitments, grouped insights, settings navigation, and honest budget reporting.');
+console.log('38 checks passed: data safety, undo, imports, recurring schedules, balances, reports, category drill-down, upcoming commitments, grouped insights, settings navigation, mobile summary layout, challenge form layout, footer removal, and honest budget reporting.');

@@ -1,4 +1,4 @@
-// Masrofy v2.1 - Smart Expense Tracker (100% client-side, localStorage)
+// Masrofy v2.1.1 - Smart Expense Tracker (100% client-side, localStorage)
 const $ = (id) => document.getElementById(id);
 
 const CATEGORIES = {
