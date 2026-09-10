@@ -1,6 +1,6 @@
 // Masrofy Service Worker - offline support for mobile
 const CACHE_PREFIX = 'masrofy-';
-const CACHE = 'masrofy-v2.0';
+const CACHE = 'masrofy-v2.1';
 const FILES = ['./', './index.html', './style.css', './app.js', './chart.min.js', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

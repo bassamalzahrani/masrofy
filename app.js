@@ -1,4 +1,4 @@
-// Masrofy v2.0 - Smart Expense Tracker (100% client-side, localStorage)
+// Masrofy v2.1 - Smart Expense Tracker (100% client-side, localStorage)
 const $ = (id) => document.getElementById(id);
 
 const CATEGORIES = {
@@ -45,6 +45,7 @@ let state = { type: 'expense', txs: [], budget: 0, currency: 'ر.س', editingId:
 let catChart = null, monthChart = null, balChart = null, weekChart = null;
 let calCursor = null; // يضبط في init بعد تعريف helpers
 let curTab = 'home';
+let activeReportChart = 'categories';
 
 const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const validDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v || '') && localDate(new Date(`${v}T12:00:00`)) === v;
@@ -250,7 +251,7 @@ function processRecurring() {
 function initTheme() {
   const t = localStorage.getItem('masrofy-theme') || 'light';
   document.documentElement.setAttribute('data-theme', t);
-  $('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+  updateThemeButton(t);
   let a = 'indigo';
   try { a = localStorage.getItem('masrofy-accent') || 'indigo'; } catch {}
   if (!ACCENTS[a]) a = 'indigo';
@@ -262,9 +263,16 @@ $('themeBtn').onclick = () => {
   const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', cur);
   localStorage.setItem('masrofy-theme', cur);
-  $('themeBtn').textContent = cur === 'dark' ? '☀️' : '🌙';
+  updateThemeButton(cur);
   renderCharts();
 };
+function updateThemeButton(theme) {
+  const btn = $('themeBtn');
+  if (!btn) return;
+  const value = btn.querySelector && btn.querySelector('.setting-value');
+  if (value) value.textContent = theme === 'dark' ? 'فاتح' : 'داكن';
+  else btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
 
 // ---------- accent themes ----------
 const ACCENTS = {
@@ -729,8 +737,10 @@ function render() {
   fillMonthFilter();
   fillReportMonth();
   renderList();
+  renderReportSummary();
   renderCharts();
   renderInsights();
+  renderUpcoming();
   renderPlan();
   renderHero();
   fillAccounts();
@@ -851,178 +861,238 @@ window.delTx = (id) => {
   }, 6000);
 };
 
-// ---------- charts ----------
+// ---------- reports dashboard ----------
+const REPORT_COLORS = ['#4f46e5','#0ea5e9','#14b8a6','#f59e0b','#f43f5e','#8b5cf6','#64748b','#84cc16'];
+const reportPeriod = (ym = selectedReportMonth()) => state.txs.filter(t => REAL(t) && (t.date || '').slice(0, 7) === ym);
+function previousMonthOf(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+function reportCategoryTotals(ym = selectedReportMonth()) {
+  const totals = {};
+  reportPeriod(ym).filter(t => t.type === 'expense').forEach(t => totals[t.category] = (totals[t.category] || 0) + t.amount);
+  return Object.entries(totals).sort((a, b) => b[1] - a[1]);
+}
+function renderReportSummary() {
+  if (!$('repIncome')) return;
+  const ym = selectedReportMonth();
+  const rows = reportPeriod(ym);
+  const income = rows.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = rows.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const net = income - expense;
+  const rate = income > 0 ? Math.round(net / income * 100) : 0;
+  $('repIncome').textContent = fmt(income);
+  $('repExpense').textContent = fmt(expense);
+  $('repNet').textContent = fmt(net);
+  $('repIncomeMeta').textContent = `${rows.filter(t => t.type === 'income').length} عملية دخل`;
+  $('repSavingRate').textContent = income > 0 ? `معدل الادخار ${rate}%` : 'لا يوجد دخل مسجل';
+  const pm = previousMonthOf(ym);
+  const [yy, mm] = ym.split('-').map(Number);
+  const cutoff = ym === curMonth() ? new Date().getDate() : new Date(yy, mm, 0).getDate();
+  const previousExpense = state.txs.filter(t => REAL(t) && t.type === 'expense' && (t.date || '').slice(0, 7) === pm && Number((t.date || '').slice(8, 10)) <= cutoff).reduce((s, t) => s + t.amount, 0);
+  if (previousExpense > 0) {
+    const diff = Math.round((expense - previousExpense) / previousExpense * 100);
+    $('repCompare').textContent = diff === 0 ? 'مثل الفترة السابقة' : `${diff > 0 ? 'أعلى' : 'أقل'} ${Math.abs(diff)}% من الفترة السابقة`;
+    $('repCompare').className = diff > 0 ? 'negative' : diff < 0 ? 'positive' : '';
+  } else {
+    $('repCompare').textContent = expense > 0 ? 'لا توجد مقارنة سابقة' : 'لا توجد مصاريف';
+    $('repCompare').className = '';
+  }
+  const budgetEnabled = ym === curMonth() && state.budget > 0;
+  const pct = budgetEnabled ? Math.round(expense / state.budget * 100) : 0;
+  $('repBudgetPct').textContent = budgetEnabled ? `${pct}%` : '—';
+  $('repBudgetBar').style.width = budgetEnabled ? `${Math.min(100, pct)}%` : '0%';
+  $('repBudgetBar').className = pct >= 100 ? 'danger' : pct >= 80 ? 'warn' : '';
+  $('repBudgetText').textContent = budgetEnabled
+    ? (expense <= state.budget ? `متبقي ${fmt(state.budget - expense)} من ${fmt(state.budget)}` : `تجاوزت الميزانية بـ ${fmt(expense - state.budget)}`)
+    : (ym === curMonth() ? 'حدد ميزانيتك الشهرية لعرض التقدم.' : 'الميزانية الحالية تظهر مع الشهر الجاري.');
+  renderTopCategories();
+}
+function renderTopCategories() {
+  const box = $('topCategoriesList');
+  if (!box) return;
+  const rows = reportCategoryTotals();
+  const total = rows.reduce((s, [, value]) => s + value, 0);
+  if (!rows.length) {
+    box.innerHTML = '<div class="empty compact">لا توجد فئات مصروف في هذا الشهر.</div>';
+    return;
+  }
+  box.innerHTML = rows.slice(0, 5).map(([id, value], index) => {
+    const pct = total ? Math.round(value / total * 100) : 0;
+    return `<button class="top-category-row" data-category="${escapeHtml(id)}">
+      <span class="category-rank">${index + 1}</span>
+      <span class="category-copy"><b>${escapeHtml(catName(id))}</b><small><i style="width:${pct}%;background:${REPORT_COLORS[index % REPORT_COLORS.length]}"></i></small></span>
+      <span class="category-value"><b>${fmt(value)}</b><small>${pct}%</small></span>
+    </button>`;
+  }).join('');
+  box.querySelectorAll('.top-category-row').forEach(btn => btn.onclick = () => openCategoryDetail(btn.dataset.category));
+}
+function openCategoryDetail(categoryId) {
+  const ym = selectedReportMonth();
+  const rows = reportPeriod(ym).filter(t => t.type === 'expense' && t.category === categoryId).sort((a, b) => b.date.localeCompare(a.date));
+  $('categoryDetailTitle').textContent = catName(categoryId);
+  $('categoryDetailSummary').textContent = `${rows.length} عملية · ${fmt(rows.reduce((s, t) => s + t.amount, 0))} · ${monthLabel(ym)}`;
+  $('categoryDetailList').innerHTML = rows.map(t => `<div class="category-detail-row"><div><b>${escapeHtml(t.note || 'بدون ملاحظة')}</b><small>${escapeHtml(t.date)} · ${escapeHtml(accName(t.accountId))}</small></div><strong>${fmt(t.amount)}</strong></div>`).join('');
+  $('categoryDetailModal').classList.remove('hidden');
+}
+$('categoryDetailClose').onclick = () => $('categoryDetailModal').classList.add('hidden');
+$('categoryDetailModal').addEventListener('click', e => { if (e.target === $('categoryDetailModal')) $('categoryDetailModal').classList.add('hidden'); });
+
+function setReportChart(name) {
+  activeReportChart = ['categories', 'months', 'balance'].includes(name) ? name : 'categories';
+  const titles = { categories: 'أين يذهب مصروفك؟', months: 'الدخل مقابل المصروف', balance: 'تطور رصيدك' };
+  $('activeChartTitle').textContent = titles[activeReportChart];
+  document.querySelectorAll('.chart-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.chart === activeReportChart));
+  document.querySelectorAll('[data-chart-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.chartPanel !== activeReportChart));
+  const resize = () => ({ categories: catChart, months: monthChart, balance: balChart }[activeReportChart]?.resize());
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(resize);
+  else resize();
+}
+document.querySelectorAll('.chart-tab').forEach(btn => btn.onclick = () => setReportChart(btn.dataset.chart));
+
 function renderCharts() {
   const reportYm = selectedReportMonth();
   const allReal = state.txs.filter(REAL);
-  const expenses = state.txs.filter(t => REAL(t) && t.type === 'expense' && (t.date || '').slice(0, 7) === reportYm);
-  const catEmpty = !expenses.length;
+  const categoryRows = reportCategoryTotals(reportYm).slice(0, 6);
+  const catEmpty = !categoryRows.length;
   const monthEmpty = !allReal.length;
   $('catEmpty').classList.toggle('hidden', !catEmpty);
   $('catChart').style.display = catEmpty ? 'none' : '';
   $('monthEmpty').classList.toggle('hidden', !monthEmpty);
   $('monthChart').style.display = monthEmpty ? 'none' : '';
   if (monthEmpty) {
-    ['balEmpty', 'weekEmpty'].forEach(id => $(id).classList.remove('hidden'));
-    ['balChart', 'weekChart'].forEach(id => $(id).style.display = 'none');
+    $('balEmpty').classList.remove('hidden');
+    $('balChart').style.display = 'none';
   }
   if (!window.Chart || monthEmpty) {
-    if (catChart) { catChart.destroy(); catChart = null; }
-    if (monthChart) { monthChart.destroy(); monthChart = null; }
-    if (balChart) { balChart.destroy(); balChart = null; }
-    if (weekChart) { weekChart.destroy(); weekChart = null; }
+    [catChart, monthChart, balChart, weekChart].forEach(c => c && c.destroy());
+    catChart = monthChart = balChart = weekChart = null;
+    setReportChart(activeReportChart);
     return;
   }
-
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const gridColor = dark ? '#2a3354' : '#e5e7eb';
-  const tickColor = dark ? '#94a3b8' : '#6b7280';
+  const gridColor = dark ? '#2a3354' : '#e8eaf0';
+  const tickColor = dark ? '#94a3b8' : '#64748b';
   Chart.defaults.color = tickColor;
   Chart.defaults.borderColor = gridColor;
-
   try {
-    const byCat = {};
-    expenses.forEach(t => byCat[t.category] = (byCat[t.category]||0) + t.amount);
-    if (catChart) { catChart.destroy(); catChart = null; }
+    if (catChart) catChart.destroy();
     if (!catEmpty) {
       catChart = new Chart($('catChart'), {
-        type: 'doughnut',
-        data: { labels: Object.keys(byCat).map(catName), datasets: [{ data: Object.values(byCat), backgroundColor: ['#4f46e5','#ef4444','#10b981','#f59e0b','#06b6d4','#8b5cf6','#ec4899','#84cc16'] }] },
-        options: { plugins: { legend: { position: 'bottom' } } }
-      });
-    }
-
-    // last 6 months with Arabic labels
-    const months = [];
-    for (let i = 5; i >= 0; i--) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-i); months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }
-    const sum = (m, type) => state.txs.filter(t => REAL(t) && (t.date||'').slice(0,7)===m && t.type===type).reduce((s,t)=>s+t.amount,0);
-    if (monthChart) { monthChart.destroy(); monthChart = null; }
-    if (!monthEmpty) {
-      monthChart = new Chart($('monthChart'), {
         type: 'bar',
-        data: { labels: months.map(monthLabel), datasets: [
-          { label: 'دخل', data: months.map(m=>sum(m,'income')), backgroundColor: '#10b981' },
-          { label: 'مصروف', data: months.map(m=>sum(m,'expense')), backgroundColor: '#ef4444' },
-        ]},
-        options: { scales: { x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } } }, plugins: { legend: { position: 'bottom' } } }
+        data: { labels: categoryRows.map(([id]) => catName(id)), datasets: [{ data: categoryRows.map(([, value]) => value), backgroundColor: categoryRows.map((_, i) => REPORT_COLORS[i % REPORT_COLORS.length]), borderRadius: 8, borderSkipped: false, barThickness: 18 }] },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          onClick: (_, elements) => { if (elements[0]) openCategoryDetail(categoryRows[elements[0].index][0]); },
+          scales: { x: { beginAtZero: true, grid: { color: gridColor }, ticks: { maxTicksLimit: 4 } }, y: { grid: { display: false }, ticks: { autoSkip: false } } },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.raw) } } },
+        },
       });
     }
-
-    // balance line: last 30 days cumulative
+    const months = [];
+    for (let i = 5; i >= 0; i--) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`); }
+    const sum = (m, type) => state.txs.filter(t => REAL(t) && (t.date || '').slice(0, 7) === m && t.type === type).reduce((s, t) => s + t.amount, 0);
+    if (monthChart) monthChart.destroy();
+    monthChart = new Chart($('monthChart'), {
+      type: 'bar',
+      data: { labels: months.map(m => MONTHS_AR[Number(m.slice(5)) - 1]), datasets: [
+        { label: 'دخل', data: months.map(m => sum(m, 'income')), backgroundColor: '#10b981', borderRadius: 7, borderSkipped: false },
+        { label: 'مصروف', data: months.map(m => sum(m, 'expense')), backgroundColor: '#f43f5e', borderRadius: 7, borderSkipped: false },
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { maxTicksLimit: 4 } } }, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } } },
+    });
     const days30 = [];
     for (let i = 29; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days30.push(localDate(d)); }
     const nets = days30.map(ds => state.txs.filter(t => REAL(t) && t.date === ds).reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0));
-    const opening = state.txs.filter(t => REAL(t) && t.date < days30[0]).reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0);
+    const opening = state.accounts.reduce((s, a) => s + (Number(a.openingBalance) || 0), 0) + state.txs.filter(t => REAL(t) && t.date < days30[0]).reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0);
     const balEmpty = opening === 0 && nets.every(v => v === 0);
     $('balEmpty').classList.toggle('hidden', !balEmpty);
     $('balChart').style.display = balEmpty ? 'none' : '';
-    if (balChart) { balChart.destroy(); balChart = null; }
+    if (balChart) balChart.destroy();
     if (!balEmpty) {
-      const AC = accColor();
       let run = opening;
       const cum = nets.map(v => (run += v));
       balChart = new Chart($('balChart'), {
         type: 'line',
-        data: { labels: days30.map(ds => ds.slice(8) + '/' + ds.slice(5, 7)), datasets: [{ label: 'الرصيد', data: cum, borderColor: AC, backgroundColor: AC + '2E', fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2 }] },
-        options: { scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } } }, plugins: { legend: { display: false } } }
+        data: { labels: days30.map(ds => ds.slice(8) + '/' + ds.slice(5, 7)), datasets: [{ data: cum, borderColor: accColor(), backgroundColor: accColor() + '18', fill: true, tension: .38, pointRadius: 0, pointHitRadius: 12, borderWidth: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 5 } }, y: { ticks: { maxTicksLimit: 4 } } }, plugins: { legend: { display: false } } },
       });
     }
-
-    // weekly expenses: last 6 rolling weeks
-    const weeks = [];
-    for (let w = 5; w >= 0; w--) {
-      const end = new Date(); end.setDate(end.getDate() - w * 7);
-      const start = new Date(end); start.setDate(start.getDate() - 6);
-      weeks.push([localDate(start), localDate(end), `${end.getDate()}/${end.getMonth() + 1}`]);
-    }
-    const wsum = weeks.map(([a, b]) => state.txs.filter(t => REAL(t) && t.type === 'expense' && t.date >= a && t.date <= b).reduce((s, t) => s + t.amount, 0));
-    const weekEmpty = wsum.every(v => v === 0);
-    $('weekEmpty').classList.toggle('hidden', !weekEmpty);
-    $('weekChart').style.display = weekEmpty ? 'none' : '';
     if (weekChart) { weekChart.destroy(); weekChart = null; }
-    if (!weekEmpty) {
-      weekChart = new Chart($('weekChart'), {
-        type: 'bar',
-        data: { labels: weeks.map(([, , l]) => l), datasets: [{ label: 'مصروف الأسبوع', data: wsum, backgroundColor: accColor(), borderRadius: 6 }] },
-        options: { scales: { x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
-      });
-    }
-  } catch (err) {
-    $('catEmpty').classList.remove('hidden');
-    $('monthEmpty').classList.remove('hidden');
-    $('balEmpty').classList.remove('hidden');
-    $('weekEmpty').classList.remove('hidden');
+    setReportChart(activeReportChart);
+  } catch {
+    ['catEmpty', 'monthEmpty', 'balEmpty'].forEach(id => $(id).classList.remove('hidden'));
   }
+}
+
+function renderUpcoming() {
+  const box = $('upcomingList');
+  if (!box) return;
+  const today = localDate();
+  const rows = state.txs.filter(t => !t.transfer && t.recur && t.recur !== 'none' && t.nextDate && t.nextDate >= today)
+    .sort((a, b) => a.nextDate.localeCompare(b.nextDate)).slice(0, 5);
+  const total = rows.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  $('upcomingTotal').textContent = rows.length ? `${rows.length} قادمة · ${fmt(total)}` : 'لا يوجد';
+  if (!rows.length) {
+    box.innerHTML = '<div class="empty compact">أضف تكرارًا للراتب أو الفواتير وستظهر مواعيدها هنا.</div>';
+    return;
+  }
+  box.innerHTML = rows.map(t => `<div class="upcoming-row"><span class="upcoming-date"><b>${t.nextDate.slice(8, 10)}</b><small>${MONTHS_AR[Number(t.nextDate.slice(5, 7)) - 1].slice(0, 3)}</small></span><span class="upcoming-copy"><b>${escapeHtml(catName(t.category))}</b><small>${escapeHtml(accName(t.accountId))} · ${escapeHtml(RECUR_NAMES[t.recur] || '')}</small></span><strong class="${t.type}">${t.type === 'income' ? '+' : '-'} ${fmt(t.amount)}</strong></div>`).join('');
 }
 
 // ---------- smart insights (rule-based AI) ----------
 function renderInsights() {
   const box = $('insights');
-  const tips = [];
+  if (!box) return;
   const ym = selectedReportMonth();
-  const periodTxs = state.txs.filter(t => REAL(t) && (t.date || '').slice(0, 7) === ym);
+  const periodTxs = reportPeriod(ym);
+  if (!periodTxs.length) {
+    box.innerHTML = '<div class="empty compact">سجّل عمليات هذا الشهر ليظهر لك تحليل مفيد.</div>';
+    return;
+  }
+  const attention = [], wins = [], suggestions = [];
   const income = periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const expense = periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const balance = income - expense;
-  if (!periodTxs.length) {
-    box.innerHTML = '<div class="insight">👋 لا توجد عمليات في هذا الشهر حتى الآن.</div>';
-    return;
-  }
-  const byCat = {};
-  periodTxs.filter(t => t.type === 'expense').forEach(t => byCat[t.category] = (byCat[t.category] || 0) + t.amount);
-  const top = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0];
-  if (top) {
-    const pct = expense ? Math.round(top[1] / expense * 100) : 0;
-    tips.push(`🏆 أعلى فئة صرف: <b>${catName(top[0])}</b> — ${fmt(top[1])} (${pct}% من المصاريف)`);
-  }
+  const categoryRows = reportCategoryTotals(ym);
+  const top = categoryRows[0];
   const [yy, mm] = ym.split('-').map(Number);
   const days = ym === curMonth() ? Math.max(1, new Date().getDate()) : new Date(yy, mm, 0).getDate();
-  tips.push(`📊 متوسط الصرف: <b>${fmt(expense / days)}</b> يومياً • <b>${fmt(expense / Math.max(1, days / 7))}</b> أسبوعياً`);
-
-  const templates = state.txs.filter(t => t.recur && t.recur !== 'none');
-  if (templates.length) {
-    const mEq = templates.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount * (t.recur === 'daily' ? 30 : t.recur === 'weekly' ? 4.33 : 1), 0);
-    if (mEq > 0) tips.push(`🔁 التزاماتك المتكررة ≈ <b>${fmt(mEq)}</b> شهرياً من ${templates.length} عملية مجدولة.`);
+  suggestions.push(`متوسط الصرف اليومي <b>${fmt(expense / days)}</b>.`);
+  if (top) {
+    const pct = expense ? Math.round(top[1] / expense * 100) : 0;
+    (pct >= 45 ? attention : suggestions).push(`<b>${escapeHtml(catName(top[0]))}</b> تمثل ${pct}% من مصروفك (${fmt(top[1])}).`);
   }
-
-  const prevDate = new Date(yy, mm - 2, 1);
-  const pm = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+  const pm = previousMonthOf(ym);
   const cutoff = ym === curMonth() ? new Date().getDate() : new Date(yy, mm, 0).getDate();
-  const prvExp = state.txs.filter(t => REAL(t) && t.type === 'expense' && (t.date || '').slice(0, 7) === pm && Number((t.date || '').slice(8, 10)) <= cutoff).reduce((s, t) => s + t.amount, 0);
-  if (prvExp > 0 && expense > 0) {
-    const diff = Math.round((expense - prvExp) / prvExp * 100);
-    if (diff > 5) tips.push(`📈 الصرف أعلى من الفترة المماثلة في ${monthLabel(pm)} بـ <b>${diff}%</b>.`);
-    else if (diff < -5) tips.push(`📉 الصرف انخفض <b>${-diff}%</b> عن الفترة المماثلة في ${monthLabel(pm)}.`);
-    else tips.push(`➖ الصرف قريب من الفترة المماثلة في ${monthLabel(pm)}.`);
-  } else if (prvExp === 0 && expense > 0) {
-    tips.push('🆕 لا توجد بيانات كافية في الشهر السابق للمقارنة.');
+  const previousExpense = state.txs.filter(t => REAL(t) && t.type === 'expense' && (t.date || '').slice(0, 7) === pm && Number((t.date || '').slice(8, 10)) <= cutoff).reduce((s, t) => s + t.amount, 0);
+  if (previousExpense > 0) {
+    const diff = Math.round((expense - previousExpense) / previousExpense * 100);
+    if (diff > 5) attention.push(`صرفك ارتفع <b>${diff}%</b> عن الفترة السابقة.`);
+    else if (diff < -5) wins.push(`خفضت صرفك <b>${-diff}%</b> عن الفترة السابقة.`);
+    else wins.push('صرفك مستقر مقارنة بالفترة السابقة.');
   }
-
   if (income > 0) {
     const rate = Math.round(balance / income * 100);
-    tips.push(rate >= 20 ? `💪 معدل الادخار <b>${rate}%</b> — ممتاز.` : rate >= 0 ? `⚠️ معدل الادخار <b>${rate}%</b> — راقب ${top ? catName(top[0]) : 'المصاريف'}.` : `🚨 عجز الشهر <b>${fmt(-balance)}</b> — مصروفك أعلى من دخلك.`);
-  }
-  if (top && top[0] === 'food') tips.push('🍔 مصاريف الطعام هي الأعلى — جرّب تحديد عدد الوجبات الخارجية أسبوعياً ومتابعة الفرق.');
-  if (top && top[0] === 'entertainment') tips.push('🎮 مصاريف الترفيه مرتفعة — حدد لها سقفاً أسبوعياً.');
-  if (top && top[0] === 'shopping') tips.push('🛍️ التسوق أعلى فئاتك — جرّب قاعدة 48 ساعة قبل الشراء.');
-  if (top && top[0] === 'transport') tips.push('🚗 المواصلات تستهلك كثيراً — قارن خيارات التنقل شهرياً.');
-
-  if (ym === curMonth() && state.plan && state.plan.alloc) {
-    const over = Object.keys(state.plan.alloc).filter(c => (state.plan.alloc[c] || 0) > 0 &&
-      periodTxs.filter(t => t.type === 'expense' && t.category === c).reduce((s, t) => s + t.amount, 0) > state.plan.alloc[c]);
-    if (over.length) tips.push(`🔔 تجاوزت حد: <b>${over.map(catName).join('، ')}</b> — راجع خطتك الشهرية.`);
+    if (rate >= 20) wins.push(`معدل ادخارك <b>${rate}%</b>، أداء ممتاز.`);
+    else if (rate < 0) attention.push(`لديك عجز بقيمة <b>${fmt(-balance)}</b>.`);
+    else suggestions.push(`معدل ادخارك ${rate}%. حاول الوصول إلى 20% تدريجيًا.`);
   }
   if (ym === curMonth() && state.budget > 0) {
-    const remain = state.budget - expense;
-    if (remain > 0) {
-      const now = new Date();
-      const daysLeft = Math.max(1, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate() + 1);
-      tips.push(`🎯 باقي <b>${fmt(remain)}</b> لنهاية الشهر — المتاح يومياً <b>${fmt(remain / daysLeft)}</b>.`);
-    }
+    const pct = Math.round(expense / state.budget * 100);
+    if (pct >= 100) attention.push(`تجاوزت ميزانية الشهر بـ <b>${fmt(expense - state.budget)}</b>.`);
+    else if (pct < 80) wins.push(`ما زلت ضمن الميزانية، والمتبقي <b>${fmt(state.budget - expense)}</b>.`);
+    else attention.push(`استخدمت ${pct}% من ميزانية الشهر.`);
   } else if (ym === curMonth()) {
-    tips.push('🎯 حدد ميزانيتك الشهرية لتفعيل التنبيهات وحد الصرف اليومي.');
+    suggestions.push('حدد ميزانية شهرية لتفعيل تنبيهات الإنفاق.');
   }
-  box.innerHTML = tips.map(t => `<div class="insight">${t}</div>`).join('');
+  const groups = [
+    { key: 'attention', title: 'يحتاج انتباه', rows: attention },
+    { key: 'wins', title: 'إنجازات', rows: wins },
+    { key: 'suggestions', title: 'اقتراحات', rows: suggestions },
+  ].filter(g => g.rows.length);
+  box.innerHTML = groups.map(g => `<section class="insight-group ${g.key}"><h4><span></span>${g.title}</h4>${g.rows.map(t => `<p>${t}</p>`).join('')}</section>`).join('');
 }
 
 // ---------- onboarding tour ----------
@@ -1590,7 +1660,7 @@ $('repBtn').onclick = () => {
   $('reportModal').classList.remove('hidden');
 };
 $('repClose').onclick = () => $('reportModal').classList.add('hidden');
-$('reportMonth').onchange = () => { renderCharts(); renderInsights(); };
+$('reportMonth').onchange = () => { renderReportSummary(); renderCharts(); renderInsights(); renderUpcoming(); };
 $('reportModal').addEventListener('click', (e) => { if (e.target === $('reportModal')) $('reportModal').classList.add('hidden'); });
 $('repCopy').onclick = async () => {
   const txt = buildReportText();
@@ -1687,7 +1757,13 @@ function lockPinStep(pin) {
 window.lockChange = () => { if (!lockFlow) return; lockFlow.next = 'change'; lockMsg('ادخل رقمك الحالي:'); };
 window.lockDisable = () => { if (!lockFlow) return; lockFlow.next = 'disable'; lockMsg('ادخل رقمك الحالي:'); };
 window.closeLockSheet = () => $('lockSheet').classList.add('hidden');
-function updateLockBtn() { const b = $('lockBtn'); if (b) b.textContent = state.lock.enabled ? '🔒' : '🔓'; }
+function updateLockBtn() {
+  const b = $('lockBtn');
+  if (!b) return;
+  const value = b.querySelector && b.querySelector('.setting-value');
+  if (value) value.textContent = state.lock.enabled ? 'مفعّل' : 'غير مفعّل';
+  else b.textContent = state.lock.enabled ? '🔒' : '🔓';
+}
 $('lockBtn').onclick = () => openLockSheet();
 function showLockScreen() {
   if (!state.lock.enabled) return;
@@ -1757,17 +1833,19 @@ try {
 
 // ---------- tab pages ----------
 function showPage(name) {
-  if (!['home', 'reports', 'add', 'cal', 'list'].includes(name)) name = 'home';
+  if (!['home', 'reports', 'add', 'cal', 'list', 'settings'].includes(name)) name = 'home';
   curTab = name;
   document.querySelectorAll('main [data-page]').forEach(s => s.classList.toggle('page-hidden', s.dataset.page !== name));
   document.querySelectorAll('.bnav').forEach(b => b.classList.toggle('active', b.dataset.page === name));
   if (name === 'home') renderPlan();
   try { localStorage.setItem('masrofy-tab', name); } catch {}
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (name === 'reports') renderCharts();
+  if (name === 'reports') { renderReportSummary(); renderCharts(); renderInsights(); renderUpcoming(); }
   if (navigator.vibrate) navigator.vibrate(8);
 }
 window.showPage = showPage;
+$('settingsBtn').onclick = () => showPage('settings');
+$('settingsBackBtn').onclick = () => showPage('home');
 
 // ---------- Mobile: PWA install + bottom nav + FAB ----------
 // 1) Service Worker (offline for mobile)

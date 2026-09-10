@@ -17,6 +17,20 @@
   <script src="./chart.min.js"></script>
 </head>
 <body>
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5M9.5 20v-6h5v6"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4m8-4v4M3 10h18"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 16V3m0 0L7 8m5-5 5 5"/><path d="M5 12v8h14v-8"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 0-4H12a2 2 0 0 1 0-4h3a6 6 0 0 0 0-12Z"/><circle cx="7.5" cy="10" r=".7"/><circle cx="9" cy="6.5" r=".7"/><circle cx="14" cy="6" r=".7"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15.2A8 8 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 5-5m-5 5-5-5"/><path d="M4 20h16"/></symbol>
+  </svg>
   <!-- splash -->
   <div id="splash" class="splash">
     <div class="splash-in">
@@ -28,13 +42,10 @@
   </div>
   <header class="header">
     <div class="container header-inner">
-      <div class="logo">💰 <span class="logo-t">مَصرفي</span> <span>Masrofy</span></div>
+      <div class="logo"><img src="icon.svg" alt="" /> <span class="logo-t">مَصرفي</span> <span>Masrofy</span></div>
       <div class="header-actions">
         <button id="installBtn" class="btn btn-primary btn-sm hidden">📲 ثبّت التطبيق</button>
-        <button id="accentBtn" class="btn-icon" title="لون التطبيق">🎨</button>
-        <button id="lockBtn" class="btn-icon" title="قفل التطبيق">🔓</button>
-        <button id="themeBtn" class="btn-icon" title="الوضع الليلي">🌙</button>
-        <button id="exportBtn" class="btn btn-outline btn-hide-mobile">📥 تصدير</button>
+        <button id="settingsBtn" class="btn-icon" title="الإعدادات" aria-label="الإعدادات"><svg class="ui-icon"><use href="#i-settings"></use></svg></button>
       </div>
     </div>
   </header>
@@ -184,16 +195,6 @@
           <button id="submitBtn" class="btn btn-primary btn-block" type="submit">إضافة ✅</button>
           <button id="cancelEditBtn" class="btn btn-outline btn-block hidden" type="button">إلغاء التعديل</button>
         </form>
-        <div class="backup-zone">
-          <button id="exportCsvBtn" class="btn btn-outline btn-sm">📥 CSV</button>
-          <button id="exportJsonBtn" class="btn btn-outline btn-sm">💾 نسخة احتياطية</button>
-          <label for="importFile" class="btn btn-outline btn-sm file-label">📤 استيراد</label>
-          <input id="importFile" type="file" accept="application/json,.json" class="hidden" />
-        </div>
-        <div class="danger-zone">
-          <button id="sampleBtn" class="btn btn-outline btn-sm">تجربة ببيانات جاهزة</button>
-          <button id="clearBtn" class="btn btn-danger btn-sm">مسح العمليات</button>
-        </div>
       </section>
 
       <!-- Recurring transactions manager -->
@@ -226,34 +227,65 @@
         <div id="customCatList" class="manage-list"></div>
       </section>
 
-      <!-- Charts -->
-      <section class="card" id="chartsCard" data-page="reports">
-        <div class="list-head">
-          <h3>📊 تحليل المصاريف حسب الفئة</h3>
+      <!-- Reports dashboard -->
+      <section class="report-hero card" id="chartsCard" data-page="reports">
+        <div class="report-title-row">
+          <div><span class="eyebrow">نظرة مالية</span><h2>تقريرك الشهري</h2><p>الأرقام المهمة في مكان واحد.</p></div>
           <div class="report-tools">
             <select id="reportMonth" aria-label="شهر التقرير"></select>
-            <button id="repBtn" class="btn btn-outline btn-sm">📤 التقرير</button>
+            <button id="repBtn" class="btn btn-outline btn-sm"><svg class="ui-icon"><use href="#i-share"></use></svg><span>مشاركة</span></button>
           </div>
         </div>
-        <div id="catEmpty" class="empty hidden">لا توجد مصاريف بعد — أضف مصروفاً لتظهر الرسوم 📊</div>
-        <canvas id="catChart" height="220"></canvas>
-        <h3 class="mt">📈 الدخل vs المصروف (آخر 6 أشهر)</h3>
-        <div id="monthEmpty" class="empty hidden">لا توجد بيانات بعد — أضف عملياتك وستظهر المقارنة هنا 📈</div>
-        <canvas id="monthChart" height="220"></canvas>
-        <h3 class="mt">📉 تطور الرصيد (آخر 30 يوم)</h3>
-        <div id="balEmpty" class="empty hidden">لا توجد حركة بعد — سجل عملياتك لترى تطور رصيدك 📉</div>
-        <canvas id="balChart" height="200"></canvas>
-        <h3 class="mt">🗓️ مصروف الأسابيع الأخيرة</h3>
-        <div id="weekEmpty" class="empty hidden">لا توجد مصاريف بعد 📭</div>
-        <canvas id="weekChart" height="200"></canvas>
+        <div class="report-kpis">
+          <article class="report-kpi income"><span>الدخل</span><b id="repIncome">—</b><small id="repIncomeMeta">هذا الشهر</small></article>
+          <article class="report-kpi expense"><span>المصروف</span><b id="repExpense">—</b><small id="repCompare">مقارنة بالشهر السابق</small></article>
+          <article class="report-kpi net"><span>صافي الادخار</span><b id="repNet">—</b><small id="repSavingRate">معدل الادخار</small></article>
+        </div>
+        <div class="report-budget" id="reportBudget">
+          <div><span>الميزانية المستخدمة</span><b id="repBudgetPct">—</b></div>
+          <div class="progress"><div id="repBudgetBar"></div></div>
+          <small id="repBudgetText">حدد ميزانيتك الشهرية لعرض التقدم.</small>
+        </div>
       </section>
 
-    <!-- Insights -->
-    <section class="card" data-page="reports">
-      <h3>🤖 تحليلات ذكية</h3>
-      <p class="muted">محرك تحليل محلي 100% — بدون إرسال بياناتك لأي سيرفر.</p>
-      <div id="insights" class="insights"></div>
-    </section>
+      <div class="report-layout" data-page="reports">
+        <section class="card report-chart-card">
+          <div class="section-heading"><div><span class="eyebrow">التحليل</span><h3 id="activeChartTitle">أين يذهب مصروفك؟</h3></div></div>
+          <div class="chart-switch" role="tablist" aria-label="نوع الرسم">
+            <button type="button" class="chart-tab active" data-chart="categories">الفئات</button>
+            <button type="button" class="chart-tab" data-chart="months">الأشهر</button>
+            <button type="button" class="chart-tab" data-chart="balance">الرصيد</button>
+          </div>
+          <div class="chart-panel" data-chart-panel="categories">
+            <div id="catEmpty" class="empty hidden">لا توجد مصاريف في هذا الشهر.</div>
+            <canvas id="catChart" height="240" aria-label="المصاريف حسب الفئة"></canvas>
+          </div>
+          <div class="chart-panel hidden" data-chart-panel="months">
+            <div id="monthEmpty" class="empty hidden">لا توجد بيانات للمقارنة.</div>
+            <canvas id="monthChart" height="220" aria-label="الدخل والمصروف خلال الأشهر"></canvas>
+          </div>
+          <div class="chart-panel hidden" data-chart-panel="balance">
+            <div id="balEmpty" class="empty hidden">لا توجد حركة رصيد بعد.</div>
+            <canvas id="balChart" height="220" aria-label="تطور الرصيد"></canvas>
+          </div>
+          <div class="hidden" aria-hidden="true"><div id="weekEmpty"></div><canvas id="weekChart"></canvas></div>
+        </section>
+
+        <section class="card top-categories-card">
+          <div class="section-heading"><div><span class="eyebrow">التفاصيل</span><h3>أعلى الفئات</h3></div><small>اضغط لعرض العمليات</small></div>
+          <div id="topCategoriesList" class="top-categories"></div>
+        </section>
+      </div>
+
+      <section class="card upcoming-card" data-page="reports">
+        <div class="section-heading"><div><span class="eyebrow">قريبًا</span><h3>الالتزامات القادمة</h3></div><span id="upcomingTotal" class="soft-pill"></span></div>
+        <div id="upcomingList" class="upcoming-list"></div>
+      </section>
+
+      <section class="card insights-card" data-page="reports">
+        <div class="section-heading"><div><span class="eyebrow">تحليل محلي</span><h3>ملخص ذكي</h3></div><small>بياناتك لا تغادر جهازك</small></div>
+        <div id="insights" class="insights"></div>
+      </section>
 
     <!-- Calendar -->
     <section class="card" id="calCard" data-page="cal">
@@ -274,7 +306,7 @@
     </section>
 
     <!-- Challenges -->
-    <section class="card" id="chalCard" data-page="reports">
+    <section class="card" id="chalCard" data-page="home">
       <h3>🎯 تحديات الادخار</h3>
       <p class="muted">حوّش لهدفك بمتعة — المساهمات تتبعية ولا تخصم من رصيدك.</p>
       <div id="chalList"></div>
@@ -294,6 +326,45 @@
       <div class="budget-row">
         <input id="chalWeeks" type="number" min="1" step="1" placeholder="عدد الأسابيع (مثال: 8)" />
         <button id="addChalBtn" class="btn btn-primary btn-sm">➕ ابدأ التحدي</button>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section class="settings-page" id="settingsPage" data-page="settings">
+      <div class="page-title">
+        <button id="settingsBackBtn" class="btn-icon" aria-label="العودة"><svg class="ui-icon"><use href="#i-arrow"></use></svg></button>
+        <div><span class="eyebrow">مَصرفي</span><h2>الإعدادات</h2></div>
+      </div>
+      <div class="settings-grid">
+        <section class="card settings-card">
+          <div class="settings-card-title"><svg class="ui-icon"><use href="#i-palette"></use></svg><div><h3>المظهر</h3><p>الوضع والألوان وطابع البطاقات</p></div></div>
+          <div class="settings-actions">
+            <button id="themeBtn" class="setting-row"><span>الوضع الليلي</span><span class="setting-value">تبديل</span></button>
+            <button id="accentBtn" class="setting-row"><span>اللون والاسم</span><span class="setting-value">تخصيص</span></button>
+          </div>
+        </section>
+        <section class="card settings-card">
+          <div class="settings-card-title"><svg class="ui-icon"><use href="#i-lock"></use></svg><div><h3>الخصوصية</h3><p>قفل واجهة التطبيق على هذا الجهاز</p></div></div>
+          <button id="lockBtn" class="setting-row"><span>قفل التطبيق</span><span class="setting-value">إعداد</span></button>
+        </section>
+        <section class="card settings-card settings-wide">
+          <div class="settings-card-title"><svg class="ui-icon"><use href="#i-download"></use></svg><div><h3>البيانات والنسخ الاحتياطي</h3><p>صدّر بياناتك قبل تغيير الجهاز</p></div></div>
+          <div class="backup-zone">
+            <button id="exportBtn" class="btn btn-primary">تصدير CSV</button>
+            <button id="exportCsvBtn" class="btn btn-outline">CSV</button>
+            <button id="exportJsonBtn" class="btn btn-outline">نسخة احتياطية JSON</button>
+            <label for="importFile" class="btn btn-outline file-label">استيراد نسخة</label>
+            <input id="importFile" type="file" accept="application/json,.json" class="hidden" />
+          </div>
+          <div class="danger-zone">
+            <button id="sampleBtn" class="btn btn-outline btn-sm">بيانات تجريبية</button>
+            <button id="clearBtn" class="btn btn-danger btn-sm">مسح العمليات</button>
+          </div>
+        </section>
+        <section class="card settings-card settings-wide">
+          <div class="settings-card-title"><svg class="ui-icon"><use href="#i-settings"></use></svg><div><h3>عن التطبيق</h3><p>مَصرفي 2.1 · يعمل محليًا وبدون حساب</p></div></div>
+          <button id="replayBtn" class="setting-row"><span>إعادة الجولة التعريفية</span><span class="setting-value">بدء</span></button>
+        </section>
       </div>
     </section>
 
@@ -325,21 +396,20 @@
 
     <footer class="footer">
       <p>صُنع بـ ❤️ كمشروع مفتوح المصدر — ارفعه على GitHub واعرضه في معرض أعمالك.</p>
-      <p><button id="replayBtn" class="btn btn-outline btn-sm">❓ إعادة الجولة التعريفية</button></p>
       <p class="muted">💡 على الجوال: من متصفح كروم اضغط ⋮ ثم "تثبيت التطبيق" — وعلى الآيفون: مشاركة ← إضافة للشاشة الرئيسية</p>
     </footer>
   </main>
 
   <!-- زر إضافة عائم للجوال -->
-  <button id="fab" class="fab" title="إضافة سريعة">＋</button>
+  <button id="fab" class="fab" title="إضافة سريعة" aria-label="إضافة عملية"><svg class="ui-icon"><use href="#i-plus"></use></svg></button>
 
   <!-- شريط تنقل سفلي للجوال -->
   <nav class="bottom-nav" aria-label="التنقل الرئيسي">
-    <button type="button" data-page="home" class="bnav active" aria-label="الرئيسية">🏠<small>الرئيسية</small></button>
-    <button type="button" data-page="reports" class="bnav" aria-label="التقارير">📊<small>تقارير</small></button>
-    <button type="button" data-page="add" class="bnav" aria-label="إضافة عملية">➕<small>إضافة</small></button>
-    <button type="button" data-page="cal" class="bnav" aria-label="التقويم">🗓️<small>التقويم</small></button>
-    <button type="button" data-page="list" class="bnav" aria-label="سجل العمليات">🧾<small>السجل</small></button>
+    <button type="button" data-page="home" class="bnav active" aria-label="الرئيسية"><svg class="ui-icon"><use href="#i-home"></use></svg><small>الرئيسية</small></button>
+    <button type="button" data-page="reports" class="bnav" aria-label="التقارير"><svg class="ui-icon"><use href="#i-chart"></use></svg><small>تقارير</small></button>
+    <button type="button" data-page="add" class="bnav add-nav" aria-label="إضافة عملية"><span class="nav-add-circle"><svg class="ui-icon"><use href="#i-plus"></use></svg></span><small>إضافة</small></button>
+    <button type="button" data-page="cal" class="bnav" aria-label="التقويم"><svg class="ui-icon"><use href="#i-calendar"></use></svg><small>التقويم</small></button>
+    <button type="button" data-page="list" class="bnav" aria-label="سجل العمليات"><svg class="ui-icon"><use href="#i-list"></use></svg><small>السجل</small></button>
   </nav>
 
   <!-- toast -->
@@ -392,6 +462,15 @@
         <button id="repShare" class="btn btn-primary" style="flex:1">📤 مشاركة</button>
         <button id="repClose" class="btn btn-outline">إغلاق</button>
       </div>
+    </div>
+  </div>
+
+  <!-- تفاصيل الفئة -->
+  <div id="categoryDetailModal" class="overlay hidden" role="dialog" aria-modal="true" aria-label="تفاصيل الفئة">
+    <div class="sheet category-detail-sheet">
+      <div class="sheet-title-row"><div><span class="eyebrow">تفاصيل المصروف</span><h3 id="categoryDetailTitle"></h3></div><button id="categoryDetailClose" class="btn-icon" aria-label="إغلاق">×</button></div>
+      <div id="categoryDetailSummary" class="category-detail-summary"></div>
+      <div id="categoryDetailList" class="category-detail-list"></div>
     </div>
   </div>
 

@@ -55,4 +55,24 @@ assert(report.includes('150%'));
 assert(report.includes('ادخار -50%'));
 assert(src.includes('let run = opening'));
 
-console.log('24 checks passed: data safety, undo, custom-category import, recurring schedules, signed opening balances and account archiving, monthly dashboard, and honest budget reporting.');
+run(`renderReportSummary()`);
+assert.equal(run(`$('repIncome').textContent`),run(`fmt(100)`));
+assert.equal(run(`$('repExpense').textContent`),run(`fmt(150)`));
+assert.equal(run(`$('repBudgetPct').textContent`),'150%');
+
+run(`state.txs.push({id:62,type:'expense',amount:35,date:localDate(),category:'food',note:'غداء',accountId:'cash',recur:'monthly',nextDate:'2099-10-15'});renderUpcoming()`);
+assert(run(`$('upcomingList').innerHTML`).includes(run(`catName('food')`)));
+assert(run(`$('upcomingTotal').textContent`).includes(run(`fmt(35)`)));
+
+run(`openCategoryDetail('food')`);
+assert.equal(run(`$('categoryDetailTitle').textContent`),run(`catName('food')`));
+assert(run(`$('categoryDetailList').innerHTML`).includes('غداء'));
+
+run(`state.customCategories={expense:[{id:'custom-unsafe',name:'<img src=x>',emoji:'☕',color:CUSTOM_GRADS[0]}],income:[]};state.txs=[{id:90,type:'expense',amount:75,date:localDate(),category:'custom-unsafe',accountId:'cash'}];renderInsights()`);
+assert(!run(`$('insights').innerHTML`).includes('<img'));
+
+run(`setReportChart('months')`);
+assert.equal(run(`$('activeChartTitle').textContent`),'الدخل مقابل المصروف');
+assert(src.includes("$('settingsBtn').onclick = () => showPage('settings')"));
+
+console.log('34 checks passed: data safety, undo, custom-category import, recurring schedules, signed opening balances, account archiving, monthly dashboard, report KPIs, category drill-down, upcoming commitments, grouped insights, settings navigation, and honest budget reporting.');
